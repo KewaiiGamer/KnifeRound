@@ -30,6 +30,7 @@ public void OnPluginStart() {
 	RegConsoleCmd("sm_kniferound", Command_KnifeRound);
 	g_bAllowedFlags = CreateConVar("kewaii_kniferound_allowedflags", "b", "Allowed flags to start a Knife Round or a vote for it", _, true, 0.0, true, 1.0);
 	g_iTimesPerMap = CreateConVar("kewaii_kniferound_maxtimespermmap", "0", "Max amount of times a knife round can occur. 0 for unlimited", _, true, 0.0, false);
+	AutoExecConfig(true, "kewaii_kniferound");
 }
 
 public Action Command_KnifeRound(int client, int args) {
