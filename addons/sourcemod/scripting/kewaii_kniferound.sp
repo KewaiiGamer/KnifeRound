@@ -11,7 +11,7 @@
 #define NAME "Knife Round"
 #define AUTHOR "Kewaii"
 #define DESC "Automatic & Manual knife rounds "
-#define VERSION "0.0.2"
+#define VERSION "0.0.3"
 
 ConVar g_bAllowedFlags, g_iTimesPerMap;
 
