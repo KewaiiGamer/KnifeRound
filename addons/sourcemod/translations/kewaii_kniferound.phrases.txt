@@ -1,0 +1,13 @@
+"Phrases"
+{
+  "KnifeRound Scheduled"
+  {
+	"en" "Next round is going to be a {blue}Knife Round"
+	"pt" "A Próxima ronda vai ser uma {blue}Ronda de Faca"
+  }
+  "KnifeRound Started"
+  {
+	"en" "A {blue}Knife Round {green}started"
+	"pt" "Começou uma {blue}Ronda de Faca"
+  }
+}

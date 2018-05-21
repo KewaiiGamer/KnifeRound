@@ -5,6 +5,8 @@
  * All Rights reserved
  */
 #include <sdktools>
+#include <kewlib>
+#include <csgocolors>
 #pragma semicolon 1
 #pragma newdecls required
 #define PLUGIN_TAG "{blue}[{pink}KnifeRound{blue}]{green}"
@@ -16,6 +18,7 @@
 ConVar g_bAllowedFlags, g_iTimesPerMap;
 
 bool isKnifeRound = false;
+bool knifeRoundScheduled = false;
 int knifeRounds = 0;
 public Plugin myinfo = 
 {
@@ -27,10 +30,22 @@ public Plugin myinfo =
 };
 
 public void OnPluginStart() {
+	LoadTranslations("kewaii_kniferound.phrases");
 	RegConsoleCmd("sm_kniferound", Command_KnifeRound);
 	g_bAllowedFlags = CreateConVar("kewaii_kniferound_allowedflags", "b", "Allowed flags to start a Knife Round or a vote for it", _, true, 0.0, true, 1.0);
 	g_iTimesPerMap = CreateConVar("kewaii_kniferound_maxtimespermmap", "0", "Max amount of times a knife round can occur. 0 for unlimited", _, true, 0.0, false);
 	AutoExecConfig(true, "kewaii_kniferound");
+	HookEvent("round_start", OnRoundStart);
+	HookEvent("item_pickup", OnWeaponPickup);
+	SetDefaultValues();
+}
+
+public Action OnWeaponPickup(Event event, const char[] name, bool dontBroadcast)
+{
+	if (isKnifeRound) {
+		int client = GetClientOfUserId(GetEventInt(event, "userid"));	
+		StripAllWeapons(client);
+	}
 }
 
 public Action Command_KnifeRound(int client, int args) {
@@ -39,10 +54,8 @@ public Action Command_KnifeRound(int client, int args) {
 	}
 	char allowedFlags[16];
 	GetConVarString(g_bAllowedFlags, allowedFlags, sizeof(allowedFlags));
-	for (int i = 0; i < strlen(allowedFlags); i++) {
-		if (HasClientFlag(client, allowedFlags[i])) {
-			continue;
-		}
+	if (!HasClientFlag(client, allowedFlags)) {
+		return Plugin_Handled;
 	}
 	int maxKnifeRounds = GetConVarInt(g_iTimesPerMap);
 	if (knifeRounds == maxKnifeRounds && maxKnifeRounds != 0) {
@@ -53,19 +66,30 @@ public Action Command_KnifeRound(int client, int args) {
 }
 
 void ScheduleKnifeRound() {
-	isKnifeRound = true;
+	knifeRoundScheduled = true;
+	CPrintToChatAll("%s %t", PLUGIN_TAG, "KnifeRound Scheduled");
 }
 
-public void OnMapStart() {	
+public void OnMapStart() {
+	SetDefaultValues();
+}
+
+public void SetDefaultValues() {
 	knifeRounds = 0;
 	isKnifeRound = false;
+	knifeRoundScheduled = false;
 }
-
-public Action OnRoundStart(Event event, const char[] name, bool dontBroadcast) {
+	
+public Action OnRoundStart(Event event, const char[] name, bool dontBroadcast) {	
 	if (isKnifeRound) {
-		CreateTimer(0.5, Timer_KnifeRound, _);
 		isKnifeRound = false;
+	}
+	if (knifeRoundScheduled) {
+		CreateTimer(0.5, Timer_KnifeRound, _);
+		knifeRoundScheduled = false;
+		isKnifeRound = true;
 		knifeRounds++;
+		CPrintToChatAll("%s %t", PLUGIN_TAG, "KnifeRound Started");
 	}
 }
 
@@ -93,17 +117,3 @@ public void StripAllWeapons(int client) {
 	}
 }
 	
-bool IsValidClient(int client, bool bAllowBots = false, bool bAllowDead = true)
-{
-	if(!(1 <= client <= MaxClients) || !IsClientInGame(client) || (IsFakeClient(client) && !bAllowBots) || IsClientSourceTV(client) || IsClientReplay(client) || (!IsPlayerAlive(client) && !bAllowDead))
-	{
-		return false;
-	}
-	return true;
-}
-
-public bool HasClientFlag(int client, char[] flagLetter)
-{
-	int flag = ReadFlagString(flagLetter);
-	return CheckCommandAccess(client, "", flag, true);	
-}
